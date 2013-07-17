@@ -38,6 +38,46 @@ GrLcdStateType GrLcdState;
 /********************** LOCAL FUNCTIONS **********************/
 /*************************************************************/
 
+void glcdControllerSelect(u08 controller)
+{
+  // select requested controller
+  if(controller == 0) {
+    cbi(GLCD_CTRL_PORT, GLCD_CTRL_CS0);
+    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS1);
+    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS2);
+  } else if(controller == 1) {
+    cbi(GLCD_CTRL_PORT, GLCD_CTRL_CS1);
+    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS0);
+    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS2);
+  } else {
+    cbi(GLCD_CTRL_PORT, GLCD_CTRL_CS2);
+    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS0);
+    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS1);
+  }
+}
+
+void glcdBusyWait(u08 controller) {
+	
+  // wait until LCD busy bit goes to zero
+  // select the controller chip
+  glcdControllerSelect(controller);
+  // do a read from control register
+  outb(GLCD_DATA_PORT, 0x00);  // no pullups
+  outb(GLCD_DATA_DDR, 0x00);
+  
+  sbi(GLCD_CTRL_PORT, GLCD_CTRL_RW);
+  cbi(GLCD_CTRL_PORT, GLCD_CTRL_RS);
+  sbi(GLCD_CTRL_PORT, GLCD_CTRL_E);
+  NOP; NOP; NOP; NOP;
+  NOP; NOP; NOP; NOP;
+
+  while(inb(GLCD_DATA_PIN) & (GLCD_STATUS_BUSY | GLCD_STATUS_RESET));
+
+  cbi(GLCD_CTRL_PORT, GLCD_CTRL_E);
+  cbi(GLCD_CTRL_PORT, GLCD_CTRL_RW);
+  outb(GLCD_DATA_DDR, 0xFF);   // output
+}
+
 void glcdInitHW(void) {
   // initialize I/O ports
   // if I/O interface is in use
@@ -65,46 +105,6 @@ void glcdInitHW(void) {
   outb(GLCD_DATA_PORT, 0x00);
   // initialize LCD data port to output
   outb(GLCD_DATA_DDR, 0xFF);
-}
-
-void glcdControllerSelect(u08 controller)
-{
-  // select requested controller
-  if(controller==0) {
-    cbi(GLCD_CTRL_PORT, GLCD_CTRL_CS0);
-    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS1);
-    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS2);
-  } else if(controller==1) {
-    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS0);
-    cbi(GLCD_CTRL_PORT, GLCD_CTRL_CS1);
-    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS2);
-  } else if(controller==2) {
-    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS0);
-    sbi(GLCD_CTRL_PORT, GLCD_CTRL_CS1);
-    cbi(GLCD_CTRL_PORT, GLCD_CTRL_CS2);
-  }
-}
-
-void glcdBusyWait(u08 controller) {
-	
-  // wait until LCD busy bit goes to zero
-  // select the controller chip
-  glcdControllerSelect(controller);
-  // do a read from control register
-  outb(GLCD_DATA_PORT, 0x00);  // no pullups
-  outb(GLCD_DATA_DDR, 0x00);
-  
-  sbi(GLCD_CTRL_PORT, GLCD_CTRL_RW);
-  cbi(GLCD_CTRL_PORT, GLCD_CTRL_RS);
-  sbi(GLCD_CTRL_PORT, GLCD_CTRL_E);
-  NOP; NOP; NOP; NOP;
-  NOP; NOP; NOP; NOP;
-
-  while(inb(GLCD_DATA_PIN) & (GLCD_STATUS_BUSY | GLCD_STATUS_RESET));
-
-  cbi(GLCD_CTRL_PORT, GLCD_CTRL_E);
-  cbi(GLCD_CTRL_PORT, GLCD_CTRL_RW);
-  outb(GLCD_DATA_DDR, 0xFF);   // output
 }
 
 void glcdControlWrite(u08 controller, u08 data) {
@@ -217,6 +217,8 @@ void glcdSetXAddress(u08 xAddr)
 	GrLcdState.ctrlr[0].xAddr = 0;
 	glcdControlWrite(1, GLCD_SET_Y_ADDR);
 	GrLcdState.ctrlr[1].xAddr = 0;
+	glcdControlWrite(2, GLCD_SET_Y_ADDR);
+	GrLcdState.ctrlr[2].xAddr = 0;
 
 	// set y (col) address on destination controller
 	glcdControlWrite((GrLcdState.lcdXAddr/GLCD_CONTROLLER_XPIXELS),
@@ -229,6 +231,7 @@ void glcdSetYAddress(u08 yAddr) {
   // set page address for all controllers
   glcdControlWrite(0, GLCD_SET_PAGE | yAddr);
   glcdControlWrite(1, GLCD_SET_PAGE | yAddr);
+  glcdControlWrite(2, GLCD_SET_PAGE | yAddr);
 }
 
 /*************************************************************/
@@ -244,6 +247,7 @@ void glcdInit()
 	// Turn on LCD
 	glcdControlWrite(0, GLCD_ON_CTRL | GLCD_ON_DISPLAY);
 	glcdControlWrite(1, GLCD_ON_CTRL | GLCD_ON_DISPLAY);
+	glcdControlWrite(2, GLCD_ON_CTRL | GLCD_ON_DISPLAY);
 	// clear lcd
 	glcdClearScreen();
 	// initialize positions
@@ -258,6 +262,7 @@ void glcdHome(void)
 	// initialize local data structures
 	GrLcdState.ctrlr[0].xAddr = GrLcdState.ctrlr[0].yAddr = 0;
 	GrLcdState.ctrlr[1].xAddr = GrLcdState.ctrlr[1].yAddr = 0;
+	GrLcdState.ctrlr[2].xAddr = GrLcdState.ctrlr[2].yAddr = 0;
 }
 
 void glcdClearScreen(void)
@@ -283,6 +288,7 @@ void glcdStartLine(u08 start)
 {
   glcdControlWrite(0, GLCD_START_LINE | start);
   glcdControlWrite(1, GLCD_START_LINE | start);
+  glcdControlWrite(2, GLCD_START_LINE | start);
 }
 
 void glcdSetAddress(u08 x, u08 yLine) {
