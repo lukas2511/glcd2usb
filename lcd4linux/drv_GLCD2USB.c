@@ -250,7 +250,7 @@ int usbSetReport(usb_dev_handle * device, int reportType, unsigned char *buffer,
 
     /* the write command needs some tweaking regarding allowed report lengths */
     if (buffer[0] == GLCD2USB_RID_WRITE) {
-	int i = 0, allowed_lengths[] = { 4 + 4, 8 + 4, 16 + 4, 32 + 4, 64 + 4, 128 + 4, 192+4 };
+	int i = 0, allowed_lengths[] = { 4 + 4, 8 + 4, 16 + 4, 32 + 4, 64 + 4, 192+4 };
 
 	if (len > 192 + 4)
 	    error("%s: %d bytes usb report is too long \n", Name, len);

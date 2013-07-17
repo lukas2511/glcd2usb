@@ -40,7 +40,7 @@
 static const display_info_t display_info PROGMEM = {
   GLCD2USB_RID_GET_INFO,
   "KS0108",
-  196, 64,
+  192, 64,
   FLAG_VERTICAL_UNITS | FLAG_BACKLIGHT
 };
 
