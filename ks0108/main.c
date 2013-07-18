@@ -533,7 +533,7 @@ int	main(void) {
 
   sei();
   for(;;) {	/* main event loop */
-    whirl_progress();
+//    whirl_progress();
     wdt_reset();
     usbPoll();
     keyPressed();
