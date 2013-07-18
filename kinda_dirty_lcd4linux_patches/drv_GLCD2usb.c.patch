@@ -1,0 +1,39 @@
+--- drv_GLCD2USB.c	(revision 1200)
++++ drv_GLCD2USB.c	(working copy)
+@@ -250,12 +250,12 @@
+ 
+     /* the write command needs some tweaking regarding allowed report lengths */
+     if (buffer[0] == GLCD2USB_RID_WRITE) {
+-	int i = 0, allowed_lengths[] = { 4 + 4, 8 + 4, 16 + 4, 32 + 4, 64 + 4, 128 + 4 };
++	int i = 0, allowed_lengths[] = { 4 + 4, 8 + 4, 16 + 4, 32 + 4, 64 + 4, 192 + 4 };
+ 
+-	if (len > 128 + 4)
++	if (len > 192 + 4)
+ 	    error("%s: %d bytes usb report is too long \n", Name, len);
+ 
+-	while (allowed_lengths[i] != (128 + 4) && allowed_lengths[i] < len)
++	while (allowed_lengths[i] != (192 + 4) && allowed_lengths[i] < len)
+ 	    i++;
+ 
+ 	len = allowed_lengths[i];
+@@ -383,7 +383,7 @@
+ 
+ 	/* this part of the buffer is not dirty or we are at end */
+ 	/* of buffer or the buffer is fill: send data then */
+-	if ((!dirty_buffer[i]) || (i == DROWS * DCOLS / 8 - 1) || (buffer.bytes[3] == 128)) {
++	if ((!dirty_buffer[i]) || (i == DROWS * DCOLS / 8 - 1) || (buffer.bytes[3] == 192)) {
+ 	    /* is there data to be sent in the buffer? */
+ 	    if (buffer.bytes[0] && buffer.bytes[3]) {
+ 		if ((err = usbSetReport(dev, USB_HID_REPORT_TYPE_FEATURE, buffer.bytes, buffer.bytes[3] + 4)) != 0)
+@@ -495,8 +495,8 @@
+ 
+ 
+     /* save display size */
+-    DCOLS = buffer.display_info.width;
+-    DROWS = buffer.display_info.height;
++    DCOLS = 192;
++    DROWS = 64;
+ 
+     /* allocate a offscreen buffer */
+     video_buffer = malloc(DCOLS * DROWS / 8);
+

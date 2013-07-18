@@ -1,0 +1,12 @@
+--- glcd2usb.h	(revision 1200)
++++ glcd2usb.h	(working copy)
+@@ -22,7 +22,7 @@
+ #define GLCD2USB_RID_WRITE_16      (GLCD2USB_RID_WRITE+2)
+ #define GLCD2USB_RID_WRITE_32      (GLCD2USB_RID_WRITE+3)
+ #define GLCD2USB_RID_WRITE_64      (GLCD2USB_RID_WRITE+4)
+-#define GLCD2USB_RID_WRITE_128     (GLCD2USB_RID_WRITE+5)
++#define GLCD2USB_RID_WRITE_192     (GLCD2USB_RID_WRITE+5)
+ 
+ typedef struct {
+     unsigned char report_id;
+
